@@ -1,5 +1,5 @@
 {
-  "name": "ns-auth-sdk",
+  "name": "@OneBoardTech/ns-auth-sdk",
   "version": "0.1.0",
   "description": "SSO library for NS Auth - Authentication, membership, and profile management compatible with applesauce",
   "main": "./dist/index.js",
@@ -29,7 +29,10 @@
     "applesauce"
   ],
   "author": "",
-  "license": "MIT",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "peerDependencies": {
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
