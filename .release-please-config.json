@@ -1,0 +1,10 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "@OneBoardTech/ns-auth-sdk",
+      "version-file": "package.json"
+    }
+  }
+}
+

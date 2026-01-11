@@ -1,20 +1,42 @@
-name: Publish to GitHub Package Registry
+name: Release and Publish
 
+# Release-please runs on every push to main to analyze commits.
+# It only creates/updates release PRs when there are relevant commits (feat, fix, etc.)
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
 
 jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: google-github-actions/release-please-action@v4
+        id: release
+        with:
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json
+
   publish:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    
+    if: |
+      (github.event_name == 'release' && github.event.action == 'created') ||
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
       
       - name: Setup Node.js
         uses: actions/setup-node@v4
