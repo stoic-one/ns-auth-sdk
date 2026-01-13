@@ -216,10 +216,3 @@ const relayService = new RelayService();
 relayService.initialize(eventStore);
 ```
 
-## TypeScript Support
-
-This library is written in TypeScript and includes full type definitions.
-
-## License
-
-MIT
