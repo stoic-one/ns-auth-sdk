@@ -1,6 +1,6 @@
 {
   "name": "ns-auth-sdk",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "SSO library for NS Auth - Authentication, membership, and profile management compatible with applesauce",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

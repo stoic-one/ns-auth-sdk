@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/OneBoardTech/ns-auth-sdk/compare/v1.1.0...v1.2.0) (2026-01-13)
+
+
+### Features
+
+* add release (semantic) and publish (npmjs) gha ([47ba9b9](https://github.com/OneBoardTech/ns-auth-sdk/commit/47ba9b99075c7ac57a6a992cbba8e03956116e87))
+
 # [1.1.0](https://github.com/OneBoardTech/ns-auth-sdk/compare/v1.0.0...v1.1.0) (2026-01-13)
 
 
