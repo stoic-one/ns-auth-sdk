@@ -12,13 +12,15 @@
     [
       "@semantic-release/npm",
       {
-        "verifyConditions": false
+        "npmPublish": false
       }
     ],
     [
       "@semantic-release/github",
       {
-        "assets": ["dist/**"]
+        "assets": ["dist/**"],
+        "failComment": false,
+        "successComment": false
       }
     ],
     [
