@@ -31,6 +31,10 @@
   ],
   "author": "",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OneBoardTech/ns-auth-sdk.git"
+  },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"
