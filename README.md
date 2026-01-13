@@ -4,32 +4,14 @@ SSO library for NS Auth - Authentication, membership, and profile management com
 
 ## Installation
 
+Install from [npm](https://www.npmjs.com/package/ns-auth-sdk):
+
 ```bash
 npm install ns-auth-sdk
 # or
 pnpm install ns-auth-sdk
 # or
 yarn add ns-auth-sdk
-```
-
-### Local Development
-
-For local development in a monorepo:
-
-```bash
-cd packages/ns-auth-sdk
-pnpm install
-pnpm build
-```
-
-Then in your main app's `package.json`:
-
-```json
-{
-  "dependencies": {
-    "ns-auth-sdk": "file:./packages/ns-auth-sdk"
-  }
-}
 ```
 
 ## Peer Dependencies
@@ -238,4 +220,3 @@ This library is written in TypeScript and includes full type definitions.
 ## License
 
 MIT
-
