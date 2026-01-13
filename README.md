@@ -1,6 +1,18 @@
-# NS Auth SSO
+# NS Auth SDK
 
-SSO library for NS Auth - Authentication, membership, and profile management compatible with applesauce.
+Decentralized SSO - Authentication, membership, and profile management.
+
+NSAuth enables client-side managing of private-keys with WebAuthn passkeys (FIDO2 credentials). By leveraging passkeys, users avoid traditional private‑key backups and password hassles, relying instead on biometric or device‑based authentication. The keys are compatible with common blockchains like Bitcoin and Ethereum and data is stored as events on public relays and can be encrypted.
+
+Two Approaches
+PRF Direct Method – Derive the private key directly from the PRF value produced by a passkey. Encryption Method – Encrypt an existing private key with a key derived from the passkey’s PRF output. WebAuthn PRF Extension The PRF (Pseudo‑Random Function) extension, part of WebAuthn Level 3, yields deterministic 32‑byte high‑entropy values from an authenticator’s internal private key and a supplied salt. The same credential ID and salt always generate the same PRF output, which never leaves the device except during authentication.
+
+Using PRF Values as Private Keys
+A 32‑byte PRF output can serve as a private key if it falls within the secp256k1 range (1 ≤ value < n). The chance of falling outside this range is astronomically low (~2⁻²²⁴), so explicit range checks are generally unnecessary.
+
+Restoration Steps
+Install the client on a new device. Fetch the latest kind 30100 event for the target public key. Extract the PWKBlob and decrypt it with the passkey’s PRF value. Use the recovered private key for signing. Multiple passkeys can each have their own PWKBlob, allowing redundancy across devices.
+
 
 ## Installation
 
@@ -13,15 +25,6 @@ pnpm install ns-auth-sdk
 # or
 yarn add ns-auth-sdk
 ```
-
-## Peer Dependencies
-
-This library requires the following peer dependencies:
-
-- `react` ^18.0.0
-- `react-dom` ^18.0.0
-- `applesauce-core` ^5.0.0
-- `nosskey-sdk` ^0.0.4
 
 ## Quick Start
 
