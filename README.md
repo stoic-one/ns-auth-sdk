@@ -1,11 +1,15 @@
 # NS Auth SDK
 
-Decentralized SSO - Authentication, membership, and profile management.
+Making Key-Management seamless with decentralized SSO - Authentication, membership, and profile management
 
 NSAuth enables client-side managing of private-keys with WebAuthn passkeys (FIDO2 credentials). By leveraging passkeys, users avoid traditional private‑key backups and password hassles, relying instead on biometric or device‑based authentication. The keys are compatible with common blockchains like Bitcoin and Ethereum and data is stored as events on public relays and can be encrypted.
 
+### The Android of Auth
+Open‑source, client‑side, decentralized single‑sign‑on (SSO) like NSAuth is superior because it puts the user’s identity and cryptographic keys directly in the hands of the individual, eliminating reliance on any central authority that could become a single point of failure, a privacy sinkhole, or a bottleneck for policy updates. By storing a self‑sovereign credential on the device’s secure enclave and validating access against a signed, versioned member list, every interaction—from unlocking a gym door to logging into an online course is verified instantly without ever transmitting personal identifiers. This architecture enables real‑time privilege changes (a badge upgrade or a revocation propagates the moment the list is updated), removes passwords and phishing risk through biometric or hardware‑key authentication, and works uniformly for anyone, including stateless persons or diaspora communities, because trust is derived from cryptographic proofs rather than government‑issued IDs. Moreover, being open source lets developers audit the code, contribute improvements, and ensure transparency, while the decentralized design guarantees that no single entity can unilaterally alter membership rules, providing stronger governance, auditability, and privacy than traditional, server‑centric SSO solutions.
+
 ### Two Approaches
-PRF Direct Method – Derive the private key directly from the PRF value produced by a passkey. Encryption Method – Encrypt an existing private key with a key derived from the passkey’s PRF output. WebAuthn PRF Extension The PRF (Pseudo‑Random Function) extension, part of WebAuthn Level 3, yields deterministic 32‑byte high‑entropy values from an authenticator’s internal private key and a supplied salt. The same credential ID and salt always generate the same PRF output, which never leaves the device except during authentication.
+PRF Direct Method – Derive the private key directly from the PRF value produced by a passkey. 
+Encryption Method – Encrypt an existing private key with a key derived from the passkey’s PRF output. WebAuthn PRF Extension The PRF (Pseudo‑Random Function) extension, part of WebAuthn Level 3, yields deterministic 32‑byte high‑entropy values from an authenticator’s internal private key and a supplied salt. The same credential ID and salt always generate the same PRF output, which never leaves the device except during authentication.
 
 ### Using PRF Values as Private Keys
 A 32‑byte PRF output can serve as a private key if it falls within the secp256k1 range (1 ≤ value < n). The chance of falling outside this range is astronomically low (~2⁻²²⁴), so explicit range checks are generally unnecessary.
