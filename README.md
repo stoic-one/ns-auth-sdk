@@ -1,6 +1,5 @@
 # NS Auth SDK
-
-## The simplest way of doing Auth with seamless and decentralized Key-Management for SSO - Authentication, membership, and profile management
+## The simplest way of doing Auth with seamless and decentralized Key-Management for SSO with Authentication, Membership, and Profile-Management
 
 NSAuth enables client-side managing of private-keys with WebAuthn passkeys (FIDO2 credentials). By leveraging passkeys, users avoid traditional private‑key backups and password hassles, relying instead on biometric or device‑based authentication. The keys are compatible with common blockchains like Bitcoin and Ethereum and data is stored as events on public relays and can be encrypted.
 
