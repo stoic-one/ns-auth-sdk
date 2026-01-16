@@ -185,6 +185,7 @@ Service for communicating with Nostr relays using applesauce-core.
 #### Methods
 
 - `initialize(eventStore: EventStore): void` - Initialize with applesauce EventStore
+- `getRelays(): string[]` - Get current relay URLs
 - `setRelays(urls: string[]): void` - Set relay URLs
 - `publishEvent(event: NostrEvent, timeoutMs?: number): Promise<boolean>` - Publish event
 - `fetchProfile(pubkey: string): Promise<ProfileMetadata | null>` - Fetch profile
@@ -221,4 +222,10 @@ const eventStore = new EventStore({
 const relayService = new RelayService();
 relayService.initialize(eventStore);
 ```
+
+## Security Guidance
+
+- Configure a strict Content Security Policy (CSP) in the host app to restrict script and image sources.
+- Add rate limiting or debouncing around profile queries and event publishing in the host app or API layer.
+- Avoid surfacing raw error details to end users; log detailed errors in secure logs.
 

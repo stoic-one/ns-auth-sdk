@@ -3,6 +3,8 @@ import type { AuthService } from '../../services/auth.service';
 import type { RelayService } from '../../services/relay.service';
 import type { AuthState } from '../../types/auth';
 import type { ProfileMetadata } from '../../types/nostr';
+import { sanitizeText } from '../../utils/sanitize';
+import { isValidPubkey, isValidRoleTag } from '../../utils/validation';
 import './Profile.css';
 
 interface ProfilePageProps {
@@ -28,6 +30,10 @@ const PersonhoodInfo = () => (
     </p>
   </section>
 );
+
+const MAX_NAME_LENGTH = 100;
+const MAX_ABOUT_LENGTH = 1000;
+const MAX_URL_LENGTH = 2048;
 
 export function ProfilePage({
   authService,
@@ -73,9 +79,9 @@ export function ProfilePage({
       
       if (profile) {
         setFormData({
-          name: profile.name || '',
-          display_name: profile.display_name || '',
-          about: profile.about || '',
+          name: sanitizeText(profile.name || ''),
+          display_name: sanitizeText(profile.display_name || ''),
+          about: sanitizeText(profile.about || ''),
           picture: profile.picture || '',
           website: profile.website || '',
         });
@@ -100,15 +106,19 @@ export function ProfilePage({
 
     try {
       const tags: string[][] = [];
+      if (!isValidPubkey(publicKey)) {
+        throw new Error('Invalid public key format');
+      }
 
       // Suggest role based on "about" field if it has content and callback provided
       if (formData.about && formData.about.trim().length > 0 && onRoleSuggestion) {
         setIsGettingRole(true);
         try {
           const roleSuggestion = await onRoleSuggestion(formData.about);
-          if (roleSuggestion) {
-            tags.push(['role', roleSuggestion]);
-            setSuggestedRole(roleSuggestion);
+          const candidate = roleSuggestion ? roleSuggestion.trim() : '';
+          if (candidate && isValidRoleTag(candidate)) {
+            tags.push(['role', candidate]);
+            setSuggestedRole(candidate);
           } else {
             setSuggestedRole(null);
           }
@@ -122,9 +132,14 @@ export function ProfilePage({
         setSuggestedRole(null);
       }
 
-      const profile = {
+      const profileEvent = {
         kind: 0,
-        content: JSON.stringify(formData),
+        content: JSON.stringify({
+          ...formData,
+          name: sanitizeText(formData.name || ''),
+          display_name: sanitizeText(formData.display_name || ''),
+          about: sanitizeText(formData.about || ''),
+        }),
         created_at: Math.floor(Date.now() / 1000),
         tags,
       };
@@ -133,10 +148,22 @@ export function ProfilePage({
         kind: 3,
         content: "",
         created_at: Math.floor(Date.now() / 1000),
-        tags: [["p", publicKey, "wss://relay.damus.io", formData.name || ""]],
+        tags: [
+          (() => {
+            const followTag: string[] = ['p', publicKey];
+            const relayUrl = relayService.getRelays()[0];
+            if (relayUrl) {
+              followTag.push(relayUrl);
+            }
+            if (formData.name) {
+              followTag.push(formData.name);
+            }
+            return followTag;
+          })(),
+        ],
       };
 
-      const signedProfile = await authService.signEvent(profile);
+      const signedProfile = await authService.signEvent(profileEvent);
       const signedFollows = await authService.signEvent(follows);
 
       await relayService.publishEvent(signedProfile);
@@ -152,9 +179,7 @@ export function ProfilePage({
       }
     } catch (error) {
       console.error('Failed to save profile:', error);
-      setSaveMessage(
-        error instanceof Error ? `Error: ${error.message}` : 'Failed to save profile'
-      );
+      setSaveMessage('Failed to save profile. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -197,6 +222,7 @@ export function ProfilePage({
               value={formData.name || ''}
               onChange={handleChange}
               placeholder="Your username"
+              maxLength={MAX_NAME_LENGTH}
             />
           </div>
 
@@ -209,6 +235,7 @@ export function ProfilePage({
               value={formData.display_name || ''}
               onChange={handleChange}
               placeholder="Your Last Name"
+              maxLength={MAX_NAME_LENGTH}
             />
           </div>
 
@@ -221,6 +248,7 @@ export function ProfilePage({
               onChange={handleChange}
               placeholder="Tell us about yourself"
               rows={4}
+              maxLength={MAX_ABOUT_LENGTH}
             />
           </div>
 
@@ -233,6 +261,7 @@ export function ProfilePage({
               value={formData.picture || ''}
               onChange={handleChange}
               placeholder="https://example.com/avatar.jpg"
+              maxLength={MAX_URL_LENGTH}
             />
           </div>
 
@@ -245,6 +274,7 @@ export function ProfilePage({
               value={formData.website || ''}
               onChange={handleChange}
               placeholder="https://linkedin.com/example"
+              maxLength={MAX_URL_LENGTH}
             />
           </div>
 
@@ -267,7 +297,7 @@ export function ProfilePage({
                 <>
                   <div className="role-tag-label">AI Suggested Role:</div>
                   <div className="role-tag">
-                    {suggestedRole}
+                    {sanitizeText(suggestedRole)}
                   </div>
                 </>
               ) : null}

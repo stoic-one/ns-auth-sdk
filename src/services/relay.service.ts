@@ -2,6 +2,7 @@ import type { EventStore } from 'applesauce-core';
 import type { NostrEvent } from '../types/nostr';
 import type { ProfileMetadata, FollowEntry } from '../types/nostr';
 import type { RelayServiceConfig } from '../types/auth';
+import { isValidPubkey, isValidRelayUrl, isValidRoleTag } from '../utils/validation';
 
 /**
  * Service for communicating with Nostr relays using applesauce-core
@@ -10,9 +11,13 @@ export class RelayService {
   private eventStore: EventStore | null = null;
   private relayUrls: string[];
   private defaultRelays = ['wss://relay.damus.io'];
+  private readonly maxProfileContentSize = 10000;
+  private readonly minProfileQueryIntervalMs = 300;
+  private readonly minPublishIntervalMs = 750;
+  private readonly lastActionAt = new Map<string, number>();
 
   constructor(config: RelayServiceConfig = {}) {
-    this.relayUrls = config.relayUrls || this.defaultRelays;
+    this.relayUrls = this.validateRelayUrls(config.relayUrls ?? this.defaultRelays);
   }
 
   /**
@@ -30,10 +35,17 @@ export class RelayService {
    * Set relay URLs
    */
   setRelays(urls: string[]): void {
-    this.relayUrls = urls;
+    this.relayUrls = this.validateRelayUrls(urls);
     if (this.eventStore && 'setRelays' in this.eventStore && typeof this.eventStore.setRelays === 'function') {
-      (this.eventStore as any).setRelays(urls);
+      (this.eventStore as any).setRelays(this.relayUrls);
     }
+  }
+
+  /**
+   * Get current relay URLs
+   */
+  getRelays(): string[] {
+    return [...this.relayUrls];
   }
 
   /**
@@ -44,6 +56,7 @@ export class RelayService {
       throw new Error('RelayService not initialized. Call initialize() with an EventStore instance.');
     }
 
+    await this.enforceRateLimit('publish', this.minPublishIntervalMs);
     return new Promise((resolve, reject) => {
       if (this.relayUrls.length === 0) {
         reject(new Error('No relays configured'));
@@ -86,6 +99,7 @@ export class RelayService {
       throw new Error('RelayService not initialized. Call initialize() with an EventStore instance.');
     }
 
+    await this.enforceRateLimit('fetch-profile', this.minProfileQueryIntervalMs);
     return new Promise((resolve) => {
       const filter = {
         kinds: [0],
@@ -101,13 +115,13 @@ export class RelayService {
       const subscription = eventStore.query(filter).subscribe({
         next: (packet: any) => {
           if (packet?.event && packet.event.kind === 0) {
-            try {
-              const metadata = JSON.parse(packet.event.content) as ProfileMetadata;
+            const metadata = this.parseProfileMetadata(packet.event.content);
+            if (metadata) {
               subscription.unsubscribe();
               resolve(metadata);
-            } catch (error) {
-              console.error('Failed to parse profile metadata:', error);
+              return;
             }
+            console.error('Failed to parse profile metadata');
           }
         },
         complete: () => {
@@ -137,6 +151,7 @@ export class RelayService {
       throw new Error('RelayService not initialized. Call initialize() with an EventStore instance.');
     }
 
+    await this.enforceRateLimit('fetch-role-tag', this.minProfileQueryIntervalMs);
     return new Promise((resolve) => {
       const filter = {
         kinds: [0],
@@ -155,9 +170,12 @@ export class RelayService {
             const tags = packet.event.tags || [];
             for (const tag of tags) {
               if (tag[0] === 'role' && tag[1]) {
-                subscription.unsubscribe();
-                resolve(tag[1]);
-                return;
+                const candidate = tag[1].trim();
+                if (isValidRoleTag(candidate)) {
+                  subscription.unsubscribe();
+                  resolve(candidate);
+                  return;
+                }
               }
             }
             subscription.unsubscribe();
@@ -190,6 +208,7 @@ export class RelayService {
       throw new Error('RelayService not initialized. Call initialize() with an EventStore instance.');
     }
 
+    await this.enforceRateLimit('fetch-follow-list', this.minProfileQueryIntervalMs);
     return new Promise((resolve) => {
       const filter = {
         kinds: [3],
@@ -252,6 +271,7 @@ export class RelayService {
       return new Map();
     }
 
+    await this.enforceRateLimit('fetch-multiple-profiles', this.minProfileQueryIntervalMs);
     return new Promise((resolve) => {
       const profiles = new Map<string, ProfileMetadata>();
       const filter = {
@@ -267,11 +287,11 @@ export class RelayService {
       const subscription = eventStore.query(filter).subscribe({
         next: (packet: any) => {
           if (packet?.event && packet.event.kind === 0 && packet.event.pubkey) {
-            try {
-              const metadata = JSON.parse(packet.event.content) as ProfileMetadata;
+            const metadata = this.parseProfileMetadata(packet.event.content);
+            if (metadata) {
               profiles.set(packet.event.pubkey, metadata);
-            } catch (error) {
-              console.error('Failed to parse profile metadata:', error);
+            } else {
+              console.error('Failed to parse profile metadata');
             }
           }
         },
@@ -302,6 +322,7 @@ export class RelayService {
       throw new Error('RelayService not initialized. Call initialize() with an EventStore instance.');
     }
 
+    await this.enforceRateLimit('query-profiles', this.minProfileQueryIntervalMs);
     return new Promise((resolve) => {
       const profiles = new Map<string, { metadata: ProfileMetadata; timestamp: number }>();
       const filter: any = {
@@ -321,15 +342,15 @@ export class RelayService {
       const subscription = eventStore.query(filter).subscribe({
         next: (packet: any) => {
           if (packet?.event && packet.event.kind === 0 && packet.event.pubkey) {
-            try {
-              const metadata = JSON.parse(packet.event.content) as ProfileMetadata;
+            const metadata = this.parseProfileMetadata(packet.event.content);
+            if (metadata) {
               const timestamp = packet.event.created_at || 0;
               const existing = profiles.get(packet.event.pubkey);
               if (!existing || timestamp > existing.timestamp) {
                 profiles.set(packet.event.pubkey, { metadata, timestamp });
               }
-            } catch (error) {
-              console.error('Failed to parse profile metadata:', error);
+            } else {
+              console.error('Failed to parse profile metadata');
             }
           }
         },
@@ -372,6 +393,12 @@ export class RelayService {
     signEvent: (event: NostrEvent) => Promise<NostrEvent>
   ): Promise<boolean> {
     const tags: string[][] = followList.map((entry) => {
+      if (!isValidPubkey(entry.pubkey)) {
+        throw new Error('Invalid pubkey format for follow list entry.');
+      }
+      if (entry.relay && !isValidRelayUrl(entry.relay)) {
+        throw new Error('Invalid relay URL format for follow list entry.');
+      }
       const tag: string[] = ['p', entry.pubkey];
       if (entry.relay) {
         tag.push(entry.relay);
@@ -391,6 +418,59 @@ export class RelayService {
 
     const signedEvent = await signEvent(event);
     return await this.publishEvent(signedEvent);
+  }
+
+  private validateRelayUrls(urls: string[]): string[] {
+    if (urls.length === 0) {
+      return [];
+    }
+    const validUrls = urls.filter((url) => isValidRelayUrl(url));
+    if (validUrls.length !== urls.length) {
+      throw new Error('Invalid relay URL format');
+    }
+    return validUrls;
+  }
+
+  private parseProfileMetadata(content: string): ProfileMetadata | null {
+    if (content.length > this.maxProfileContentSize) {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(content);
+      if (!parsed || typeof parsed !== 'object') {
+        return null;
+      }
+      const metadata: ProfileMetadata = {};
+      if (typeof (parsed as ProfileMetadata).name === 'string') {
+        metadata.name = (parsed as ProfileMetadata).name;
+      }
+      if (typeof (parsed as ProfileMetadata).display_name === 'string') {
+        metadata.display_name = (parsed as ProfileMetadata).display_name;
+      }
+      if (typeof (parsed as ProfileMetadata).about === 'string') {
+        metadata.about = (parsed as ProfileMetadata).about;
+      }
+      if (typeof (parsed as ProfileMetadata).picture === 'string') {
+        metadata.picture = (parsed as ProfileMetadata).picture;
+      }
+      if (typeof (parsed as ProfileMetadata).website === 'string') {
+        metadata.website = (parsed as ProfileMetadata).website;
+      }
+      return metadata;
+    } catch (error) {
+      console.error('Failed to parse profile metadata:', error);
+      return null;
+    }
+  }
+
+  private async enforceRateLimit(action: string, minIntervalMs: number): Promise<void> {
+    const lastAt = this.lastActionAt.get(action) ?? 0;
+    const now = Date.now();
+    const waitMs = minIntervalMs - (now - lastAt);
+    if (waitMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+    }
+    this.lastActionAt.set(action, Date.now());
   }
 }
 

@@ -18,6 +18,7 @@ export function RegistrationFlow({
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState<'info' | 'creating' | 'success'>('info');
   const [username, setUsername] = useState('');
+  const maxUsernameLength = 100;
 
   const handleRegister = async () => {
     setIsLoading(true);
@@ -34,17 +35,7 @@ export function RegistrationFlow({
         credentialId = await authService.createPasskey(passkeyUsername);
       } catch (passkeyError) {
         console.error('[RegistrationFlow] Passkey creation failed:', passkeyError);
-        const errorMessage = passkeyError instanceof Error ? passkeyError.message : String(passkeyError);
-        if (errorMessage.includes('NotAllowedError') || errorMessage.includes('user')) {
-          throw new Error(
-            'Passkey creation was cancelled or not allowed. Please try again and complete the authentication prompt.'
-          );
-        } else if (errorMessage.includes('NotSupportedError') || errorMessage.includes('PRF')) {
-          throw new Error(
-            'WebAuthn PRF extension is not supported in your browser. Please use Chrome 118+, Safari 17+, or a compatible browser.'
-          );
-        }
-        throw new Error(`Failed to create passkey: ${errorMessage}`);
+        throw new Error('Unable to create passkey. Please try again.');
       }
 
       let keyInfo;
@@ -52,16 +43,7 @@ export function RegistrationFlow({
         keyInfo = await authService.createNostrKey(credentialId);
       } catch (nostrKeyError) {
         console.error('[RegistrationFlow] Failed to create Nostr key from passkey:', nostrKeyError);
-        const errorMessage = nostrKeyError instanceof Error ? nostrKeyError.message : String(nostrKeyError);
-        if (errorMessage.includes('PRF secret not available') || errorMessage.includes('PRF')) {
-          throw new Error(
-            'PRF extension is required but not available. This may mean:\n' +
-            '1. Your browser doesn\'t support WebAuthn PRF extension (Chrome 118+, Safari 17+)\n' +
-            '2. The passkey was created without PRF support\n' +
-            'Please try again or use a compatible browser.'
-          );
-        }
-        throw nostrKeyError;
+        throw new Error('Unable to finalize account. Please try again.');
       }
 
       authService.setCurrentKeyInfo(keyInfo);
@@ -75,7 +57,7 @@ export function RegistrationFlow({
       }
     } catch (err) {
       console.error('[RegistrationFlow] Registration error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create account');
+      setError('Registration failed. Please try again.');
       setStep('info');
       setIsLoading(false);
     }
@@ -118,6 +100,7 @@ export function RegistrationFlow({
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={isLoading}
+                maxLength={maxUsernameLength}
               />
             </div>
 

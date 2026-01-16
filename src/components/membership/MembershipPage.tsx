@@ -3,6 +3,8 @@ import type { AuthService } from '../../services/auth.service';
 import type { RelayService } from '../../services/relay.service';
 import type { AuthState } from '../../types/auth';
 import type { ProfileMetadata, FollowEntry } from '../../types/nostr';
+import { sanitizeText } from '../../utils/sanitize';
+import { isValidHttpUrl } from '../../utils/validation';
 import { BarcodeScanner } from './BarcodeScanner';
 import './Membership.css';
 
@@ -177,9 +179,7 @@ export function MembershipPage({
       setTimeout(() => setSaveMessage(null), 3000);
     } catch (error) {
       console.error('Failed to add member:', error);
-      setSaveMessage(
-        error instanceof Error ? `Error: ${error.message}` : 'Failed to add member'
-      );
+      setSaveMessage('Failed to add member. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -201,9 +201,7 @@ export function MembershipPage({
       setTimeout(() => setSaveMessage(null), 3000);
     } catch (error) {
       console.error('Failed to remove member:', error);
-      setSaveMessage(
-        error instanceof Error ? `Error: ${error.message}` : 'Failed to remove member'
-      );
+      setSaveMessage('Failed to remove member. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -294,20 +292,25 @@ export function MembershipPage({
                 return (
                   <div key={profile.pubkey} className="profile-item">
                     <div className="profile-info">
-                      {profile.picture && (
+                      {profile.picture && isValidHttpUrl(profile.picture) && (
                         <img
                           src={profile.picture}
-                          alt={getProfileDisplayName(profile, profile.pubkey)}
+                          alt={sanitizeText(getProfileDisplayName(profile, profile.pubkey))}
                           className="profile-avatar"
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          onError={(event) => {
+                            event.currentTarget.style.display = 'none';
+                          }}
                         />
                       )}
                       <div className="profile-details">
                         <div className="profile-name">
-                          {getProfileDisplayName(profile, profile.pubkey)}
+                          {sanitizeText(getProfileDisplayName(profile, profile.pubkey))}
                         </div>
                         <div className="profile-pubkey">{formatPubkey(profile.pubkey)}</div>
                         {profile.about && (
-                          <div className="profile-about">{profile.about}</div>
+                          <div className="profile-about">{sanitizeText(profile.about)}</div>
                         )}
                       </div>
                     </div>
@@ -340,25 +343,30 @@ export function MembershipPage({
                 return (
                   <div key={member.pubkey} className="member-item">
                     <div className="profile-info">
-                      {profile?.picture && (
+                      {profile?.picture && isValidHttpUrl(profile.picture) && (
                         <img
                           src={profile.picture}
-                          alt={getProfileDisplayName(profile || {}, member.pubkey)}
+                          alt={sanitizeText(getProfileDisplayName(profile || {}, member.pubkey))}
                           className="profile-avatar"
+                          loading="lazy"
+                          referrerPolicy="no-referrer"
+                          onError={(event) => {
+                            event.currentTarget.style.display = 'none';
+                          }}
                         />
                       )}
                       <div className="profile-details">
                         <div className="profile-name">
                           {profile
-                            ? getProfileDisplayName(profile, member.pubkey)
+                            ? sanitizeText(getProfileDisplayName(profile, member.pubkey))
                             : formatPubkey(member.pubkey)}
                         </div>
                         <div className="profile-pubkey">{formatPubkey(member.pubkey)}</div>
                         {profile?.about && (
-                          <div className="profile-about">{profile.about}</div>
+                          <div className="profile-about">{sanitizeText(profile.about)}</div>
                         )}
                         {member.petname && (
-                          <div className="profile-petname">Name: {member.petname}</div>
+                          <div className="profile-petname">Name: {sanitizeText(member.petname)}</div>
                         )}
                       </div>
                     </div>
