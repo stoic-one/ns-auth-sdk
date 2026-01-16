@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/stoic-one/ns-auth-sdk/compare/v1.2.10...v1.3.0) (2026-01-16)
+
+
+### Features
+
+* **auth:** increase cache time ([cb4ff85](https://github.com/stoic-one/ns-auth-sdk/commit/cb4ff850c63caa8ab79874a124b15fe47f6b0210))
+
 ## [1.2.10](https://github.com/stoic-one/ns-auth-sdk/compare/v1.2.9...v1.2.10) (2026-01-16)
 
 ## [1.2.9](https://github.com/OneBoardTech/ns-auth-sdk/compare/v1.2.8...v1.2.9) (2026-01-16)
