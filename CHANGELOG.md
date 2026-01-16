@@ -1,5 +1,22 @@
 ## [1.2.9](https://github.com/OneBoardTech/ns-auth-sdk/compare/v1.2.8...v1.2.9) (2026-01-16)
 
+### Updates
+
+* enhance RelayService with validation and rate limiting ([c29bef6](https://github.com/OneBoardTech/ns-auth-sdk/commit/c29bef6))
+
+### Continuous Integration
+
+* add .local to .gitignore ([a138a62](https://github.com/OneBoardTech/ns-auth-sdk/commit/a138a62))
+
+### Documentation
+
+* update README ([c87d20a](https://github.com/OneBoardTech/ns-auth-sdk/commit/c87d20a))
+* fix CHANGELOG ([4cbcd72](https://github.com/OneBoardTech/ns-auth-sdk/commit/4cbcd72))
+
+### Chores
+
+* add dependabot configuration ([5b3640b](https://github.com/OneBoardTech/ns-auth-sdk/commit/5b3640b))
+
 ## [1.2.8](https://github.com/OneBoardTech/ns-auth-sdk/compare/v1.2.7...v1.2.8) (2026-01-14)
 
 
