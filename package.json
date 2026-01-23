@@ -1,6 +1,6 @@
 {
   "name": "ns-auth-sdk",
-  "version": "1.5.3",
+  "version": "1.5.4",
   "description": "Decentralized SSO library - Authentication, membership, and profile management",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
