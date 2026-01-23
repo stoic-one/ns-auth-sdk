@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/stoic-one/ns-auth-sdk/compare/v1.4.1...v1.5.0) (2026-01-23)
+
+
+### Features
+
+* **package:** Update package.json ([da38361](https://github.com/stoic-one/ns-auth-sdk/commit/da38361a20896aeaa77b9957507b26d7aa7f1172))
+
 ## [1.4.1](https://github.com/stoic-one/ns-auth-sdk/compare/v1.4.0...v1.4.1) (2026-01-20)
 
 # [1.4.0](https://github.com/stoic-one/ns-auth-sdk/compare/v1.3.0...v1.4.0) (2026-01-19)
