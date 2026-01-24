@@ -1,3 +1,11 @@
+# [1.6.0](https://github.com/stoic-one/ns-auth-sdk/compare/v1.5.8...v1.6.0) (2026-01-24)
+
+
+### Features
+
+* **dependency:** Update nosskey.ts ([7ebd0b5](https://github.com/stoic-one/ns-auth-sdk/commit/7ebd0b599591e22c2bd62105352d9e630f2883b3))
+* **dependency:** Update package.json ([fea9b34](https://github.com/stoic-one/ns-auth-sdk/commit/fea9b348605d0436b9f6a83ed868a8311ebe52d1))
+
 ## [1.5.8](https://github.com/stoic-one/ns-auth-sdk/compare/v1.5.7...v1.5.8) (2026-01-23)
 
 ## [1.5.7](https://github.com/stoic-one/ns-auth-sdk/compare/v1.5.6...v1.5.7) (2026-01-23)
